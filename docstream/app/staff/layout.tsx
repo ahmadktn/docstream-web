@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import StaffSidebar from "@/components/StaffSidebar";
 import Navbar from "@/components/Navbar";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface StaffLayoutProps {
   children: React.ReactNode;
@@ -14,7 +15,8 @@ export default function StaffLayout({ children }: StaffLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <ProtectedRoute>
+      <div className="flex h-screen bg-gray-50">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -59,5 +61,6 @@ export default function StaffLayout({ children }: StaffLayoutProps) {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

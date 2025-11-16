@@ -142,7 +142,7 @@ const StaffManagement = () => {
   };
 
   const handleAddStaff = () => {
-    router.push("/ict/staff-management/add-staff");
+    router.push("/ict/add-staff");
   };
 
   const handleExport = async () => {

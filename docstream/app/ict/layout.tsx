@@ -3,15 +3,15 @@
 
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
-import SupervisorSidebar from "@/components/SupervisorSidebar";
+import ICTStaffSidebar from "@/components/IctSidebar";
 import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-interface SupervisorLayoutProps {
+interface IctLayoutProps {
   children: React.ReactNode;
 }
 
-export default function SupervisorLayout({ children }: SupervisorLayoutProps) {
+export default function IctLayout({ children }: IctLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -31,7 +31,7 @@ export default function SupervisorLayout({ children }: SupervisorLayoutProps) {
         md:relative md:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <SupervisorSidebar />
+        <ICTStaffSidebar />
         
         {/* Close button for mobile */}
         <button

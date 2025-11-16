@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface VehicleForm {
   name: string;
@@ -13,13 +15,6 @@ interface VehicleForm {
   duration_of_trip: string;
 }
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  divison: string;
-}
-
 interface SubmittedData extends VehicleForm {
   division_head_approval: boolean;
   corporate_service_approval: boolean;
@@ -28,6 +23,9 @@ interface SubmittedData extends VehicleForm {
 }
 
 const WithInRequest = () => {
+  const { user, accessToken, isLoading } = useAuth();
+  const router = useRouter();
+
   const [form, setForm] = useState<VehicleForm>({
     name: "",
     divison: "",
@@ -42,7 +40,6 @@ const WithInRequest = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [submittedData, setSubmittedData] = useState<SubmittedData | null>(null);
 
   // Vehicle type options
@@ -58,25 +55,23 @@ const WithInRequest = () => {
     "Marketing",
   ];
 
-  // ✅ Simulate getting current logged-in user
+  // ✅ Set user data when component loads
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        // In a real app, you might get this from context, auth state, or API
-        const user: User = {
-          id: 1,
-          name: "Auwal",
-          email: "auwal@company.com",
-          divison: "Operations",
-        };
-        setCurrentUser(user);
-        setForm((prev) => ({ ...prev, name: user.name }));
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+    if (!isLoading && user) {
+      setForm(prev => ({
+        ...prev,
+        name: user.staff_id || "",
+        divison: user.department || ""
+      }));
+    }
+  }, [user, isLoading]);
+
+  // ✅ Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && (!accessToken || !user)) {
+      router.push('/login');
+    }
+  }, [accessToken, user, isLoading, router]);
 
   // ✅ Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -132,14 +127,16 @@ const WithInRequest = () => {
   // ✅ Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      setMessage(`❌ ${validationError}`);
+    
+    if (!user?.id || !accessToken) {
+      setMessage("❌ You must be logged in to submit requests");
+      router.push('/login');
       return;
     }
 
-    if (!currentUser) {
-      setMessage("❌ User not authenticated. Please log in.");
+    const validationError = validateForm();
+    if (validationError) {
+      setMessage(`❌ ${validationError}`);
       return;
     }
 
@@ -152,19 +149,25 @@ const WithInRequest = () => {
         division_head_approval: false,
         corporate_service_approval: false,
         logistics_officer_approval: false,
-        created_by: currentUser.id,
+        created_by: user.id,
       };
 
       const response = await fetch(
         "http://127.0.0.1:8000/api/v1/vehicle-request/",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+          },
           body: JSON.stringify(requestData),
         }
       );
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Authentication failed. Please login again.");
+        }
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to send vehicle request");
       }
@@ -172,9 +175,10 @@ const WithInRequest = () => {
       const result = await response.json();
       showSuccessPopup(requestData);
 
+      // Reset form but keep user data
       setForm({
-        name: currentUser.name,
-        divison: "",
+        name: user.staff_id || "",
+        divison: user.department || "",
         vehicle_type: "",
         purpose: "",
         destination: "",
@@ -204,11 +208,37 @@ const WithInRequest = () => {
     });
   };
 
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-lg border border-green-200 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!accessToken || !user) {
+    return null;
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-lg border border-green-200">
-      <h3 className="text-2xl font-bold text-gray-800 text-center mb-8 pb-4 border-b-2 border-emerald-500">
-        Vehicle Request (Within Town)
-      </h3>
+      {/* User Info Header */}
+      <div className="mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+        <div className="flex items-center justify-between">
+          <h3 className="text-2xl font-bold text-gray-800">
+            Vehicle Request (Within Town)
+          </h3>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Welcome, <strong>{user.staff_id}</strong></p>
+            <p className="text-xs text-gray-500">Role: {user.role} | Dept: {user.department}</p>
+          </div>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-emerald-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

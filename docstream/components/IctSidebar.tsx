@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import logo from "../assets/logo.png";
+import logo from "../public/logo.png";
 
 const ICTStaffSidebar = () => {
   const pathname = usePathname();
@@ -14,15 +14,15 @@ const ICTStaffSidebar = () => {
   };
 
   const navLinks = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/find-company", label: "Find Company Details" },
-    { href: "/request-vehicle", label: "Request Vehicle" },
-    { href: "/inventory-form", label: "Inventory/Checklist Form" },
-    { href: "/request-items", label: "Request Items" },
-    { href: "/staff-management", label: "Staff Management" },
-    { href: "/activity-log", label: "Activity Log" },
-    { href: "/add-facility", label: "Add Facility" },
-    { href: "/edit-driver-vehicle-info", label: "Edit Driver/Vehicle Info" },
+    { href: "/ict/dashboard", label: "Dashboard" },
+    { href: "/ict/find-company", label: "Find Company Details" },
+    { href: "/ict/request-vehicle", label: "Request Vehicle" },
+    { href: "/ict/inventory-form", label: "Inventory/Checklist Form" },
+    { href: "/ict/request-items", label: "Request Items" },
+    { href: "/ict/staff-management", label: "Staff Management" },
+    { href: "/ict/activity-log", label: "Activity Log" },
+    { href: "/ict/add-facility", label: "Add Facility" },
+    { href: "/ict/edit-driver-vehicle-info", label: "Edit Driver/Vehicle Info" },
   ];
 
   return (

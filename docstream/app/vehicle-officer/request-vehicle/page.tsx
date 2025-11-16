@@ -31,8 +31,8 @@ export default function VehicleOfficerRequests() {
   const fetchVehicleRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://127.0.0.1:8000/api/v1/vehicle-request");
-      
+      const response = await fetch("http://127.0.0.1:8000/api/v1/vehicle-request/");
+
       if (!response.ok) {
         throw new Error(`Failed to fetch requests: ${response.status}`);
       }
@@ -48,11 +48,11 @@ export default function VehicleOfficerRequests() {
     }
   };
 
-  // Approve a vehicle request as logistics officer via proxy
+  // Approve a vehicle request as logistics officer
   const approveRequest = async (requestId: number) => {
     try {
       setApprovingId(requestId);
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request?id=${requestId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request/${requestId}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export default function VehicleOfficerRequests() {
     }
   };
 
-  // Reject a vehicle request
+  // Reject a vehicle request as logistics officer
   const rejectRequest = async (requestId: number) => {
     if (!window.confirm("Are you sure you want to reject this vehicle request?")) {
       return;
@@ -90,7 +90,7 @@ export default function VehicleOfficerRequests() {
 
     try {
       setApprovingId(requestId);
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request?id=${requestId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request/${requestId}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

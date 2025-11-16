@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface Item {
   id: number;
@@ -25,6 +27,9 @@ interface ItemState {
 }
 
 const RequestItems = () => {
+  const { user, accessToken, isLoading } = useAuth();
+  const router = useRouter();
+
   const [request, setRequest] = useState<RequestState>({
     name: "",
     uniqueId: "",
@@ -43,6 +48,13 @@ const RequestItems = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submittedItemsCount, setSubmittedItemsCount] = useState(0);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && (!accessToken || !user)) {
+      router.push('/login');
+    }
+  }, [accessToken, user, isLoading, router]);
 
   const handleItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -84,24 +96,32 @@ const RequestItems = () => {
       return;
     }
 
+    if (!user?.id || !accessToken) {
+      setMessage("❌ You must be logged in to submit requests");
+      router.push('/login');
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
     try {
       const payload = {
         items: request.items,
-        created_by: 1,
+        created_by: user.id, // Use actual user ID from auth context
       };
 
       const response = await fetch("http://127.0.0.1:8000/api/v1/item-request/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
         },
         body: JSON.stringify(payload),
       });
 
       const data = await response.json();
+      
       if (response.ok) {
         showSuccessPopup(request.items.length);
         setRequest({
@@ -111,11 +131,16 @@ const RequestItems = () => {
           items: [],
         });
       } else {
-        setMessage(`❌ Failed: ${JSON.stringify(data)}`);
+        if (response.status === 401) {
+          setMessage("❌ Session expired. Please login again.");
+          router.push('/login');
+        } else {
+          setMessage(`❌ Failed: ${data.detail || JSON.stringify(data)}`);
+        }
       }
     } catch (err) {
       console.error(err);
-      setMessage("❌ Network error");
+      setMessage("❌ Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -125,16 +150,39 @@ const RequestItems = () => {
     setShowPopup(false);
   };
 
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-4 bg-white min-h-screen font-sans flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!accessToken || !user) {
+    return null;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 bg-white min-h-screen font-sans">
       {/* Header */}
       <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white rounded-2xl p-6 mb-6 shadow-2xl shadow-emerald-200 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-radial-gradient circle at center, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%) rounded-full"></div>
-        <div className="flex items-center gap-5 relative z-10">
-          <div className="text-4xl bg-white/10 p-5 rounded-2xl backdrop-blur-sm">📦</div>
-          <div>
-            <h1 className="text-2xl font-bold mb-2 tracking-tight">Item Request</h1>
-            <p className="text-lg opacity-90 font-normal">Submit your item requirements for approval</p>
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-5">
+            <div className="text-4xl bg-white/10 p-5 rounded-2xl backdrop-blur-sm">📦</div>
+            <div>
+              <h1 className="text-2xl font-bold mb-2 tracking-tight">Item Request</h1>
+              <p className="text-lg opacity-90 font-normal">Submit your item requirements for approval</p>
+            </div>
+          </div>
+          <div className="text-right bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+            <p className="text-sm opacity-90">Welcome, <strong>{user.staff_id}</strong></p>
+            <p className="text-xs opacity-80">Role: {user.role} | Dept: {user.department}</p>
           </div>
         </div>
       </div>
@@ -240,8 +288,10 @@ const RequestItems = () => {
                 <span className="text-2xl">📋</span>
                 <h2 className="text-xl font-semibold text-emerald-700">Requested Items</h2>
               </div>
-              <div className="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs font-semibold">
-                {request.items.length} {request.items.length === 1 ? 'item' : 'items'}
+              <div className="flex items-center gap-4">
+                <div className="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs font-semibold">
+                  {request.items.length} {request.items.length === 1 ? 'item' : 'items'}
+                </div>
               </div>
             </div>
 
@@ -391,6 +441,10 @@ const RequestItems = () => {
                 <div className="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
                   <span className="font-medium text-gray-600 text-sm">Items Count</span>
                   <span className="font-bold text-emerald-700 text-base">{submittedItemsCount} items</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                  <span className="font-medium text-gray-600 text-sm">Submitted By</span>
+                  <span className="font-bold text-emerald-700 text-base">{user.staff_id}</span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
                   <span className="font-medium text-gray-600 text-sm">Submission Time</span>

@@ -28,12 +28,11 @@ export default function CorporateServiceRequests() {
   const [error, setError] = useState("");
   const [approvingId, setApprovingId] = useState<number | null>(null);
 
-  // Fetch vehicle requests from API via proxy
+  // Fetch vehicle requests from API
   const fetchVehicleRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://127.0.0.1:8000/api/v1/vehicle-request");
-      
+      const response = await fetch("http://127.0.0.1:8000/api/v1/vehicle-request/");
       if (!response.ok) {
         throw new Error(`Failed to fetch requests: ${response.status}`);
       }
@@ -49,11 +48,11 @@ export default function CorporateServiceRequests() {
     }
   };
 
-  // Approve a vehicle request as corporate service via proxy
+  // Approve a vehicle request as corporate service
   const approveRequest = async (requestId: number) => {
     try {
       setApprovingId(requestId);
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request?id=${requestId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request/${requestId}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -91,7 +90,7 @@ export default function CorporateServiceRequests() {
 
     try {
       setApprovingId(requestId);
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request?id=${requestId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/vehicle-request/${requestId}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

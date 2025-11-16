@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import VehicleOfficerSidebar from "@/components/VehicleOfficerSidebar";
 import Navbar from "@/components/Navbar";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface VehicleLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export default function SupervisorLayout({ children }: VehicleLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
+    <ProtectedRoute>
     <div className="flex h-screen bg-gray-50">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
@@ -61,5 +63,6 @@ export default function SupervisorLayout({ children }: VehicleLayoutProps) {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
